@@ -4,3 +4,9 @@ class Measure:
         self.time = time
         self.state = state
         self.energy = energy
+
+    def __str__(self):
+        return "date : " + self.date \
+               + " time : " + self.time \
+               + " state : " + self.state \
+               + " energy : " + self.energy
