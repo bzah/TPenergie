@@ -16,11 +16,8 @@ def read_appliance(filename):
     appliance_line = file.readline()
     appliance = get_second_word(appliance_line)
     appliance = Appliance.Appliance(filename, project, household, appliance)
-    # Read the forth line
     file.readline()
-    # Read the fifth line
     file.readline()
-    # For each new line
     for line in file:
         slitted_value = line.split("\t")
         measure = Measure.Measure(slitted_value[0], slitted_value[1],
@@ -70,8 +67,8 @@ def insert_appliances(appliances):
     conn.close()
 
 
-app = read_appliance("data/sample.txt")
-
+# #### MAIN #### #
+applianceTest = read_appliance("data/sample.txt")
 connTest = connect()
-insert_appliance(connTest, app)
+insert_appliance(connTest, applianceTest)
 connTest.close()
