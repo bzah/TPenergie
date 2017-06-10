@@ -33,21 +33,25 @@ def read_appliance(filename):
 
 def read_all_appliance():
     appliances = [Appliance]
-    for filename in os.listdir('/data/text_files/'):
+    for filename in os.listdir('/data/'):
         print(filename)
         appliance = read_appliance(filename)
         appliances.append(appliance)
     return appliances
 
 
-def insert_appliance(appliance):
+def connect():
+    return psycopg2.connect(host="localhost", database="energie", user="postgres", password="postgres")
+
+
+def insert_appliance(conn, appliance):
     # print("insertion into DB Energie")
     appliance_statement = """INSERT INTO appliance(name,project,household,file)
                              VALUES (%s,%s,%s,%s) RETURNING id"""
 
     measure_statement = """INSERT INTO measure(appliance,date,state,energy)
                            VALUES (%s,%s,%s,%s) RETURNING id"""
-    conn = connect()
+
     cursor = conn.cursor()
     cursor.execute(appliance_statement, (appliance.name, appliance.project, appliance.household, appliance.filename))
     app_id = cursor.fetchone()[0]
@@ -57,12 +61,17 @@ def insert_appliance(appliance):
                            (app_id, measure.date + ":" + measure.time, measure.state, measure.energy))
         conn.commit()
     cursor.close()
+
+
+def insert_appliances(appliances):
+    conn = connect()
+    for appliance in appliances:
+        insert_appliance(conn, appliance)
     conn.close()
 
 
-def connect():
-    return psycopg2.connect(host="localhost", database="energie", user="postgres", password="postgres")
-
-
 app = read_appliance("data/sample.txt")
-insert_appliance(app)
+
+connTest = connect()
+insert_appliance(connTest, app)
+connTest.close()
