@@ -1,41 +1,68 @@
-import os, Measure, Appliance
+import os, Measure, Appliance, psycopg2
 
 
 # Get the second word (index 1) and remove the
 def get_second_word(line):
     words = line.split(" : ")
-    print(words)
     return words[1][:-2]
 
 
 def read_appliance(filename):
-    # Open 1 file
-    filename = "1000080-2000900-3009900.txt"
     file = open(filename, "r")
-    # Read the first line
-    projectLine = file.readline()
-    project = get_second_word(projectLine)
-    # Read the second line
-    householdLine = file.readline()
-    household = get_second_word(householdLine)
-    # Read the third line
-    applianceLine = file.readline()
-    appliance = get_second_word(applianceLine)
+    project_line = file.readline()
+    project = get_second_word(project_line)
+    household_line = file.readline()
+    household = get_second_word(household_line)
+    appliance_line = file.readline()
+    appliance = get_second_word(appliance_line)
     appliance = Appliance.Appliance(filename, project, household, appliance)
     # Read the forth line
     file.readline()
     # Read the fifth line
     file.readline()
-    measures = [Measure]
     # For each new line
     for line in file:
-        splittedValue = line.split("\t")
-        date = splittedValue[0]
-        time = splittedValue[1]
-        state = splittedValue[2]
-        energy = splittedValue[3]
-        measure = Measure.Measure(date, time, state, energy)
-        measures.append(measure)
-        print(date + " " + time + " --> " + state + " " + energy)
-
+        slitted_value = line.split("\t")
+        measure = Measure.Measure(slitted_value[0], slitted_value[1],
+                                  slitted_value[2], slitted_value[3])
+        appliance.measures.append(measure)
+        #  print(measure.date + " " + measure.time + " --> "
+        #       + measure.state + " " + measure.energy)
     return appliance
+
+
+def read_all_appliance():
+    appliances = [Appliance]
+    for filename in os.listdir('/data/text_files/'):
+        print(filename)
+        appliance = read_appliance(filename)
+        appliances.append(appliance)
+    return appliances
+
+
+def insert_appliance(appliance):
+    # print("insertion into DB Energie")
+    appliance_statement = """INSERT INTO appliance(name,project,household,file)
+                             VALUES (%s,%s,%s,%s) RETURNING id"""
+
+    measure_statement = """INSERT INTO measure(appliance,date,state,energy)
+                           VALUES (%s,%s,%s,%s) RETURNING id"""
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute(appliance_statement, (appliance.name, appliance.project, appliance.household, appliance.filename))
+    app_id = cursor.fetchone()[0]
+    if app_id is not None:
+        for measure in appliance.measures:
+            cursor.execute(measure_statement,
+                           (app_id, measure.date + ":" + measure.time, measure.state, measure.energy))
+        conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def connect():
+    return psycopg2.connect(host="localhost", database="energie", user="postgres", password="postgres")
+
+
+app = read_appliance("data/sample.txt")
+insert_appliance(app)
