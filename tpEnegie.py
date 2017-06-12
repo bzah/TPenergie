@@ -29,10 +29,11 @@ def read_appliance(filename):
 
 
 def read_all_appliance():
-    appliances = [Appliance]
-    for filename in os.listdir('/data/'):
+    appliances = []
+    dir = './data/'
+    for filename in os.listdir(dir):
         print(filename)
-        appliance = read_appliance(filename)
+        appliance = read_appliance(dir + filename)
         appliances.append(appliance)
     return appliances
 
@@ -50,6 +51,7 @@ def insert_appliance(conn, appliance):
                            VALUES (%s,%s,%s,%s) RETURNING id"""
 
     cursor = conn.cursor()
+    print(appliance)
     cursor.execute(appliance_statement, (appliance.name, appliance.project, appliance.household, appliance.filename))
     app_id = cursor.fetchone()[0]
     if app_id is not None:
@@ -68,7 +70,10 @@ def insert_appliances(appliances):
 
 
 # #### MAIN #### #
-applianceTest = read_appliance("data/sample.txt")
-connTest = connect()
-insert_appliance(connTest, applianceTest)
-connTest.close()
+# applianceTest = read_appliance("data_example/sample.txt")
+# connTest = connect()
+# insert_appliance(connTest, applianceTest)
+# connTest.close()
+
+appliances_test = read_all_appliance()
+insert_appliances(appliances_test)
