@@ -1,4 +1,5 @@
 import psycopg2
+import time
 
 
 def connect():
@@ -48,7 +49,7 @@ def insert_measure_with_filtered_measures(conn, appliance_id, measure):
                    (appliance_id, measure.date + ":" + measure.time, measure.state, measure.energy, measure.recurrence))
 
 
-def insert_appliance(conn, appliance, strategy):
+def insert_appliance(conn, appliance, strategy, async):
     appliance_statement = """INSERT INTO appliance(name,project,household,file)
                              VALUES (%s,%s,%s,%s) RETURNING id"""
 
@@ -59,18 +60,29 @@ def insert_appliance(conn, appliance, strategy):
     app_id = cursor.fetchone()[0]
     if app_id is not None:
         for measure in appliance.measures:
-            if strategy == "SIMPLE":
-                insert_measure(conn, app_id, measure)
-            elif strategy == "NO_ZERO":
-                insert_measure_without_zero(conn, app_id, measure)
-            elif strategy == "FILTERED":
-                insert_measure_with_filtered_measures(conn, app_id, measure)
+            if async is True:
+                print("INSERTING : ")
+                print(measure)
+                insert(app_id, conn, measure, strategy)
+                conn.commit()
+                time.sleep(5)
+            else:
+                insert(app_id, conn, measure, strategy)
         conn.commit()
     cursor.close()
 
 
-def insert_appliances(appliances, strategy):
+def insert(app_id, conn, measure, strategy):
+    if strategy == "SIMPLE":
+        insert_measure(conn, app_id, measure)
+    elif strategy == "NO_ZERO":
+        insert_measure_without_zero(conn, app_id, measure)
+    elif strategy == "FILTERED":
+        insert_measure_with_filtered_measures(conn, app_id, measure)
+
+
+def insert_appliances(appliances, strategy, async):
     conn = connect()
     for appliance in appliances:
-        insert_appliance(conn, appliance, strategy)
+        insert_appliance(conn, appliance, strategy, async)
     conn.close()

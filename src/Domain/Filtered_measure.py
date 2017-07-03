@@ -1,4 +1,4 @@
-import Measure
+from src.Domain import Measure
 
 
 class Filtered_measure(Measure.Measure):

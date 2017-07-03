@@ -8,5 +8,5 @@ class Measure:
     def __str__(self):
         return "date : " + self.date \
                + " time : " + self.time \
-               + " state : " + self.state \
-               + " energy : " + self.energy
+               + " state : " + str(self.state) \
+               + " energy : " + str(self.energy)
